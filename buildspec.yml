@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - echo $AWS_DEFAULT_REGION
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 949263681218.dkr.ecr.us-west-2.amazonaws.com
+      - REPOSITORY_NAME="devops-dev-ecr"      
+      - REPOSITORY_URI=949263681218.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPOSITORY_NAME
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+  build:
+    commands:
+      - echo Building the Docker image...
+      - sudo docker build -t $REPOSITORY_NAME:latest .
+      - sudo docker tag $REPOSITORY_NAME:latest $REPOSITORY_URI:latest
+      - sudo docker tag $REPOSITORY_NAME:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - eval $(aws ecr get-login --no-include-email | sed 's|https://||')
+      - sudo docker push $REPOSITORY_URI:latest
+      - sudo docker push $REPOSITORY_URI:$IMAGE_TAG
+      - printf '[{"name":"devops-dev-ecr","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+  files: imagedefinitions.json
