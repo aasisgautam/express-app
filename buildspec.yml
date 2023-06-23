@@ -21,7 +21,7 @@ phases:
       - eval $(aws ecr get-login --no-include-email | sed 's|https://||')
       - sudo docker push $REPOSITORY_URI:latest
       - sudo docker push $REPOSITORY_URI:$IMAGE_TAG
-      - printf '[{"name":"devops-dev-ecr","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"devops-ecr-dev","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files: imagedefinitions.json
